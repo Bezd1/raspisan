@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание — учебный планировщик</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<section id="login-screen" class="login-screen">
+    <div class="login-card">
+        <div class="brand brand-large">
+            <div class="brand-mark">Р</div>
+            <div><strong>Расписание</strong><span>Учебный планировщик</span></div>
+        </div>
+        <div class="eyebrow">Система формирования расписания</div>
+        <h1>Вход в систему</h1>
+        <p class="muted">Управляйте занятиями, группами, преподавателями и аудиториями в одном интерфейсе.</p>
+        <form id="login-form" class="stack">
+            <label>Логин<input id="login-username" value="admin" autocomplete="username" required></label>
+            <label>Пароль<input id="login-password" type="password" value="admin" autocomplete="current-password" required></label>
+            <button class="button button-primary" type="submit">Войти</button>
+        </form>
+        <div class="demo-hint"><b>Демо:</b> admin/admin · teacher/teacher</div>
+    </div>
+</section>
+
+<div id="app-shell" class="app-shell hidden">
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark">Р</div>
+            <div><strong>Расписание</strong><span>Веб-приложение</span></div>
+        </div>
+        <div class="topbar-actions">
+            <div class="user-chip"><b id="user-name"></b><small id="user-role"></small></div>
+            <button id="theme-button" class="icon-button" title="Тёмная тема">◐</button>
+            <button id="logout-button" class="button button-secondary">Выйти</button>
+        </div>
+    </header>
+
+    <main class="page">
+        <section class="hero">
+            <div>
+                <div class="eyebrow">Учебное расписание</div>
+                <h1>Формируйте расписание визуально</h1>
+                <p>Создавайте занятия, перемещайте их Drag & Drop и сразу получайте предупреждение о конфликте.</p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card"><span>Занятий</span><b id="stat-lessons">0</b></div>
+                <div class="stat-card"><span>Групп</span><b id="stat-groups">0</b></div>
+                <div class="stat-card"><span>Преподавателей</span><b id="stat-teachers">0</b></div>
+            </div>
+        </section>
+
+        <nav class="tabs">
+            <button class="tab active" data-view="schedule">Расписание</button>
+            <button class="tab admin-only" data-view="directories">Справочники</button>
+        </nav>
+
+        <section id="schedule-view">
+            <div class="toolbar">
+                <div class="week-switcher">
+                    <button class="week-button active" data-week="1">1-я неделя</button>
+                    <button class="week-button" data-week="2">2-я неделя</button>
+                </div>
+                <label class="search-field">⌕<input id="search-input" type="search" placeholder="Поиск по расписанию"></label>
+                <button id="add-lesson-button" class="button button-primary">+ Занятие</button>
+            </div>
+            <div class="schedule-wrap"><div class="schedule">
+                <div class="schedule-head">
+                    <div>День</div><div>1 пара</div><div>2 пара</div><div>3 пара</div><div>4 пара</div><div>5 пара</div><div>6 пара</div>
+                </div>
+                <div id="schedule-body"></div>
+            </div></div>
+            <div class="schedule-groups">
+                <span>Группа:</span>
+                <label class="compact-field"><select id="group-filter"><option value="">Все группы</option></select></label>
+            </div>
+            <div class="schedule-help">↔ Перетащите карточку в другую ячейку. Двойной клик по занятию — редактирование.</div>
+        </section>
+
+        <section id="directories-view" class="hidden">
+            <div class="directory-grid">
+                <article class="directory-card"><header><div><span class="directory-icon">Г</span><h2>Группы</h2></div><button class="button button-small" data-add="groups">+ Добавить</button></header><div id="groups-list"></div></article>
+                <article class="directory-card"><header><div><span class="directory-icon">П</span><h2>Преподаватели</h2></div><button class="button button-small" data-add="teachers">+ Добавить</button></header><div id="teachers-list"></div></article>
+                <article class="directory-card"><header><div><span class="directory-icon">Д</span><h2>Дисциплины</h2></div><button class="button button-small" data-add="subjects">+ Добавить</button></header><div id="subjects-list"></div></article>
+                <article class="directory-card"><header><div><span class="directory-icon">А</span><h2>Аудитории</h2></div><button class="button button-small" data-add="classrooms">+ Добавить</button></header><div id="classrooms-list"></div></article>
+            </div>
+        </section>
+    </main>
+</div>
+
+<dialog id="lesson-dialog" class="dialog">
+<form id="lesson-form" class="dialog-card">
+    <header class="dialog-header"><div><div class="eyebrow">Занятие</div><h2 id="lesson-dialog-title">Новое занятие</h2></div><button type="button" class="icon-button" data-close>×</button></header>
+    <input id="lesson-id" type="hidden">
+    <div class="form-grid">
+        <label>Неделя<select id="lesson-week"><option value="1">1-я неделя</option><option value="2">2-я неделя</option></select></label>
+        <label>День<select id="lesson-day"><option value="1">Понедельник</option><option value="2">Вторник</option><option value="3">Среда</option><option value="4">Четверг</option><option value="5">Пятница</option><option value="6">Суббота</option></select></label>
+        <label>Пара<select id="lesson-period"><option value="1">1 · 08:30–10:00</option><option value="2">2 · 10:10–11:40</option><option value="3">3 · 12:00–13:30</option><option value="4">4 · 13:40–15:10</option><option value="5">5 · 15:20–16:50</option><option value="6">6 · 17:00–18:30</option></select></label>
+        <label>Группа<select id="lesson-group"></select></label>
+        <label>Дисциплина<select id="lesson-subject"></select></label>
+        <label>Преподаватель<select id="lesson-teacher"></select></label>
+        <label>Аудитория<select id="lesson-classroom"><option value="">Без аудитории</option></select></label>
+        <label>Тип<select id="lesson-type"><option>Лекция</option><option>Практика</option><option>Лабораторная</option><option>Семинар</option></select></label>
+        <label class="full-width">Примечание<textarea id="lesson-note" rows="3" placeholder="Необязательно"></textarea></label>
+    </div>
+    <footer class="dialog-actions"><button id="delete-lesson-button" type="button" class="button button-danger hidden">Удалить</button><span></span><button type="button" class="button button-secondary" data-close>Отмена</button><button class="button button-primary">Сохранить</button></footer>
+</form>
+</dialog>
+
+<dialog id="directory-dialog" class="dialog">
+<form id="directory-form" class="dialog-card">
+    <header class="dialog-header"><div><div class="eyebrow">Справочник</div><h2 id="directory-title">Новая запись</h2></div><button type="button" class="icon-button" data-close>×</button></header>
+    <input id="directory-type" type="hidden"><div id="directory-fields"></div>
+    <footer class="dialog-actions"><span></span><button type="button" class="button button-secondary" data-close>Отмена</button><button class="button button-primary">Добавить</button></footer>
+</form>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
