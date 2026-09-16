@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание — учебный планировщик</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<section id="login-screen" class="login-screen">
+    <div class="login-card">
+        <div class="brand brand-large">
+            <div class="brand-mark">Н</div>
+            <div>
+                <strong>Расписание</strong>
+                <span>Учебный планировщик</span>
+            </div>
+        </div>
+
+        <div class="eyebrow">НСМК · расписание</div>
+        <h1>Вход в систему</h1>
+        <p class="muted">
+            Войдите под своей учётной записью для просмотра или управления расписанием.
+        </p>
+
+        <form id="login-form" class="stack">
+            <label>
+                Логин
+                <input id="login-username" value="admin" autocomplete="username" required>
+            </label>
+            <label>
+                Пароль
+                <input id="login-password" type="password" value="admin" autocomplete="current-password" required>
+            </label>
+            <button class="button button-primary" type="submit">Войти</button>
+        </form>
+
+        <div class="demo-hint">
+            <b>Демо:</b> admin/admin · teacher/teacher
+        </div>
+    </div>
+</section>
+
+<div id="app-shell" class="app-shell hidden">
+    <aside class="sidebar">
+        <div class="sidebar-brand brand">
+            <div class="brand-mark">Н</div>
+            <div>
+                <strong>НСМК</strong>
+                <span>Расписание</span>
+            </div>
+        </div>
+
+        <nav class="side-nav">
+            <button class="side-link active" data-view="schedule">
+                <span>▦</span>
+                Расписание
+            </button>
+            <button class="side-link admin-only" data-view="directories">
+                <span>▤</span>
+                Справочники
+            </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-user">
+                <div class="sidebar-user-icon">●</div>
+                <div>
+                    <b id="side-user-name">Пользователь</b>
+                    <small id="side-user-role">Роль</small>
+                </div>
+            </div>
+            <button id="logout-button" class="side-logout">Выйти</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <div class="eyebrow">Учебное расписание</div>
+                <h1>Расписание занятий</h1>
+            </div>
+
+            <div class="topbar-actions">
+                <button id="theme-button" class="icon-button" title="Тёмная тема">◐</button>
+            </div>
+        </header>
+
+        <section id="schedule-view" class="content-section">
+            <div class="schedule-toolbar">
+                <div class="week-switcher">
+                    <button class="week-button active" data-week="1">1-я неделя</button>
+                    <button class="week-button" data-week="2">2-я неделя</button>
+                </div>
+
+                <span id="current-week-label" class="current-week-label">1-я неделя</span>
+
+                <label class="search-field">
+                    ⌕
+                    <input id="search-input" type="search" placeholder="Поиск по расписанию">
+                </label>
+
+                <div class="toolbar-actions admin-only">
+                    <button id="copy-week-button" class="button button-secondary">
+                        Копировать неделю
+                    </button>
+                    <button id="add-lesson-button" class="button button-primary">
+                        + Новое занятие
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <section class="schedule-panel">
+                    <div class="panel-head">
+                        <div>
+                            <b>Расписание</b>
+                            <span>Дни недели и учебные пары</span>
+                        </div>
+                        <div class="stats-inline">
+                            <span><b id="stat-lessons">0</b> занятий</span>
+                            <span><b id="stat-groups">0</b> групп</span>
+                        </div>
+                    </div>
+
+                    <div class="schedule-wrap">
+                        <div class="schedule">
+                            <div class="schedule-head">
+                                <div class="head-day">День / пара</div>
+                                <div>1 пара<br><small>08:30–10:00</small></div>
+                                <div>2 пара<br><small>10:10–11:40</small></div>
+                                <div>3 пара<br><small>12:00–13:30</small></div>
+                                <div>4 пара<br><small>13:40–15:10</small></div>
+                                <div>5 пара<br><small>15:20–16:50</small></div>
+                                <div>6 пара<br><small>17:00–18:30</small></div>
+                            </div>
+                            <div id="schedule-body"></div>
+                        </div>
+                    </div>
+
+                    <div class="schedule-groups">
+                        <div>
+                            <b>Учебные группы</b>
+                        </div>
+                        <div id="schedule-groups-list" class="schedule-groups-list"></div>
+                    </div>
+                </section>
+
+                <aside class="teachers-panel">
+                    <div class="panel-head compact">
+                        <div>
+                            <b>Преподаватели</b>
+                            <span><b id="stat-teachers">0</b> преподавателей</span>
+                        </div>
+                    </div>
+
+                    <label class="teacher-search">
+                        ⌕
+                        <input id="teacher-search" type="search" placeholder="Поиск преподавателя">
+                    </label>
+
+                    <div id="teachers-panel-list" class="teachers-list"></div>
+                </aside>
+            </div>
+
+        </section>
+
+        <section id="directories-view" class="content-section hidden">
+            <div class="page-heading">
+                <div>
+                    <div class="eyebrow">Администрирование</div>
+                    <h2>Справочники</h2>
+                    <p>Управление группами, преподавателями, дисциплинами и аудиториями.</p>
+                </div>
+            </div>
+
+            <div class="directory-grid">
+                <article class="directory-card">
+                    <header>
+                        <div><span class="directory-icon">Г</span><h3>Группы</h3></div>
+                        <button class="button button-small" data-add="groups">+ Добавить</button>
+                    </header>
+                    <div id="groups-list"></div>
+                </article>
+
+                <article class="directory-card">
+                    <header>
+                        <div><span class="directory-icon">П</span><h3>Преподаватели</h3></div>
+                        <button class="button button-small" data-add="teachers">+ Добавить</button>
+                    </header>
+                    <div id="teachers-list"></div>
+                </article>
+
+                <article class="directory-card">
+                    <header>
+                        <div><span class="directory-icon">Д</span><h3>Дисциплины</h3></div>
+                        <button class="button button-small" data-add="subjects">+ Добавить</button>
+                    </header>
+                    <div id="subjects-list"></div>
+                </article>
+
+                <article class="directory-card">
+                    <header>
+                        <div><span class="directory-icon">А</span><h3>Аудитории</h3></div>
+                        <button class="button button-small" data-add="classrooms">+ Добавить</button>
+                    </header>
+                    <div id="classrooms-list"></div>
+                </article>
+            </div>
+        </section>
+    </main>
+</div>
+
+<dialog id="lesson-dialog" class="dialog">
+    <form id="lesson-form" class="dialog-card">
+        <header class="dialog-header">
+            <div>
+                <div class="eyebrow">Расписание</div>
+                <h2 id="lesson-dialog-title">Новое занятие</h2>
+            </div>
+            <button type="button" class="icon-button" data-close>×</button>
+        </header>
+
+        <input id="lesson-id" type="hidden">
+
+        <div class="form-grid">
+            <label>Неделя
+                <select id="lesson-week">
+                    <option value="1">1-я неделя</option>
+                    <option value="2">2-я неделя</option>
+                </select>
+            </label>
+            <label>День
+                <select id="lesson-day">
+                    <option value="1">Понедельник</option>
+                    <option value="2">Вторник</option>
+                    <option value="3">Среда</option>
+                    <option value="4">Четверг</option>
+                    <option value="5">Пятница</option>
+                    <option value="6">Суббота</option>
+                </select>
+            </label>
+            <label>Пара
+                <select id="lesson-period">
+                    <option value="1">1 · 08:30–10:00</option>
+                    <option value="2">2 · 10:10–11:40</option>
+                    <option value="3">3 · 12:00–13:30</option>
+                    <option value="4">4 · 13:40–15:10</option>
+                    <option value="5">5 · 15:20–16:50</option>
+                    <option value="6">6 · 17:00–18:30</option>
+                </select>
+            </label>
+            <label>Группа<select id="lesson-group"></select></label>
+            <label>Дисциплина<select id="lesson-subject"></select></label>
+            <label>Преподаватель<select id="lesson-teacher"></select></label>
+            <label>Аудитория<select id="lesson-classroom"></select></label>
+            <label>Тип
+                <select id="lesson-type">
+                    <option>Лекция</option>
+                    <option>Практика</option>
+                    <option>Лабораторная</option>
+                    <option>Семинар</option>
+                </select>
+            </label>
+            <label class="full-width">Примечание
+                <textarea id="lesson-note" rows="3" placeholder="Необязательно"></textarea>
+            </label>
+        </div>
+
+        <footer class="dialog-actions">
+            <button id="delete-lesson-button" type="button" class="button button-danger hidden">Удалить</button>
+            <span></span>
+            <button type="button" class="button button-secondary" data-close>Отмена</button>
+            <button class="button button-primary">Сохранить</button>
+        </footer>
+    </form>
+</dialog>
+
+<dialog id="copy-week-dialog" class="dialog">
+    <form id="copy-week-form" class="dialog-card">
+        <header class="dialog-header">
+            <div>
+                <div class="eyebrow">Расписание</div>
+                <h2>Копирование расписания</h2>
+            </div>
+            <button type="button" class="icon-button" data-close>×</button>
+        </header>
+
+        <p class="muted">Все занятия выбранной недели будут скопированы на другую неделю. Существующие занятия в целевой неделе не перезаписываются.</p>
+
+        <div class="form-grid">
+            <label>Копировать из
+                <select id="copy-source-week">
+                    <option value="1">1-я неделя</option>
+                    <option value="2">2-я неделя</option>
+                </select>
+            </label>
+            <label>Копировать в
+                <select id="copy-target-week">
+                    <option value="2">2-я неделя</option>
+                    <option value="1">1-я неделя</option>
+                </select>
+            </label>
+        </div>
+
+        <footer class="dialog-actions">
+            <span></span>
+            <button type="button" class="button button-secondary" data-close>Отмена</button>
+            <button class="button button-primary">Копировать</button>
+        </footer>
+    </form>
+</dialog>
+
+<dialog id="directory-dialog" class="dialog">
+    <form id="directory-form" class="dialog-card">
+        <header class="dialog-header">
+            <div>
+                <div class="eyebrow">Справочник</div>
+                <h2 id="directory-title">Новая запись</h2>
+            </div>
+            <button type="button" class="icon-button" data-close>×</button>
+        </header>
+
+        <input id="directory-type" type="hidden">
+        <div id="directory-fields"></div>
+
+        <footer class="dialog-actions">
+            <span></span>
+            <button type="button" class="button button-secondary" data-close>Отмена</button>
+            <button class="button button-primary">Добавить</button>
+        </footer>
+    </form>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
