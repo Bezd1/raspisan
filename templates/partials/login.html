@@ -1,0 +1,43 @@
+<section id="login-screen" class="login-screen">
+    <div class="login-card">
+        <div class="brand brand-large">
+            <div class="brand-mark">Н</div>
+            <div>
+                <strong>Расписание</strong>
+                <span>Учебный планировщик</span>
+            </div>
+        </div>
+
+        <div class="eyebrow">НСМК · расписание</div>
+        <h1>Вход в систему</h1>
+        <p class="muted">
+            Войдите под своей учётной записью для просмотра или управления расписанием.
+        </p>
+
+        <form id="login-form" class="stack">
+            <label>
+                Логин
+                <input id="login-username" value="admin" autocomplete="username" required>
+            </label>
+            <label>
+                Пароль
+                <input id="login-password" type="password" value="admin" autocomplete="current-password" required>
+            </label>
+            <button class="button button-primary" type="submit">Войти</button>
+        </form>
+
+        <div class="demo-hint">
+            <strong>Демо-доступ</strong>
+            <div class="demo-accounts">
+                <button type="button" class="demo-account" data-demo-login="admin" data-demo-password="admin">
+                    <span>Администратор</span>
+                    <small>admin / admin</small>
+                </button>
+                <button type="button" class="demo-account" data-demo-login="teacher" data-demo-password="teacher">
+                    <span>Преподаватель</span>
+                    <small>teacher / teacher</small>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>

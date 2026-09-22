@@ -1,0 +1,64 @@
+<dialog id="lesson-dialog" class="dialog">
+    <form id="lesson-form" class="dialog-card">
+        <header class="dialog-header">
+            <div>
+                <div class="eyebrow">Расписание</div>
+                <h2 id="lesson-dialog-title">Новое занятие</h2>
+            </div>
+            <button type="button" class="icon-button" data-close>×</button>
+</header>
+
+        <input id="lesson-id" type="hidden">
+
+        <div class="form-grid">
+            <label>Неделя
+                <select id="lesson-week">
+                    <option value="1">1-я неделя</option>
+                    <option value="2">2-я неделя</option>
+                </select>
+            </label>
+            <label>День
+                <select id="lesson-day">
+                    <option value="1">Понедельник</option>
+                    <option value="2">Вторник</option>
+                    <option value="3">Среда</option>
+                    <option value="4">Четверг</option>
+                    <option value="5">Пятница</option>
+                    <option value="6">Суббота</option>
+                </select>
+            </label>
+            <label>Пара
+                <select id="lesson-period">
+                    <option value="1">1 · 08:30–10:00</option>
+                    <option value="2">2 · 10:10–11:40</option>
+                    <option value="3">3 · 12:00–13:30</option>
+                    <option value="4">4 · 13:40–15:10</option>
+                    <option value="5">5 · 15:20–16:50</option>
+                    <option value="6">6 · 17:00–18:30</option>
+                </select>
+            </label>
+            <label>Группа<select id="lesson-group"></select></label>
+            <label>Дисциплина<select id="lesson-subject"></select></label>
+            <label>Преподаватель<select id="lesson-teacher"></select></label>
+            <label>Аудитория<select id="lesson-classroom"></select></label>
+            <label>Тип
+                <select id="lesson-type">
+                    <option>Лекция</option>
+                    <option>Практика</option>
+                    <option>Лабораторная</option>
+                    <option>Семинар</option>
+                </select>
+            </label>
+            <label class="full-width">Примечание
+                <textarea id="lesson-note" rows="3" placeholder="Необязательно"></textarea>
+            </label>
+        </div>
+
+        <footer class="dialog-actions">
+            <button id="delete-lesson-button" type="button" class="button button-danger hidden">Удалить</button>
+            <span></span>
+            <button type="button" class="button button-secondary" data-close>Отмена</button>
+            <button class="button button-primary">Сохранить</button>
+        </footer>
+    </form>
+</dialog>
