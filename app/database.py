@@ -75,8 +75,6 @@ def _migrate_users(db):
     if not columns:
         return
 
-    # Старые версии проекта хранили пароль в колонке password.
-    # Переносим такие данные в password_hash. Если пароль был обычным текстом,
     if "password_hash" not in columns and "password" in columns:
         db.execute("ALTER TABLE users RENAME TO users_old")
         db.execute(
@@ -106,7 +104,6 @@ def _migrate_lessons(db):
     if not columns:
         return
 
-    # Старые версии использовали day/pair_number/notes.
     if "weekday" not in columns and "day" in columns:
         db.execute("ALTER TABLE lessons RENAME TO lessons_old")
         db.execute(
@@ -156,8 +153,6 @@ def init_db(app):
         _migrate_users(db)
         _migrate_lessons(db)
 
-        # Демо-учётные записи нужны только для входа в систему.
-        # Справочники и расписание намеренно остаются пустыми.
         demo_users = [
             ("admin", generate_password_hash("admin"), "admin"),
             ("teacher", generate_password_hash("teacher"), "teacher"),
