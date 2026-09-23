@@ -50,7 +50,7 @@ def _create(name, data):
 
     if name == "teachers":
         full_name = _required_text(data, "full_name", "ФИО")
-        short_name = _required_text(data, "short_name", "короткое имя")
+        short_name = "".join(part[0].upper() for part in full_name.split() if part)[:4]
         return db.execute(
             "INSERT INTO teachers (full_name, short_name, color) VALUES (?, ?, ?)",
             (full_name, short_name, str(data.get("color", "#4f46e5"))),

@@ -61,8 +61,8 @@ def validate_lesson(data):
         return "Неделя должна быть 1 или 2."
     if weekday not in range(1, 7):
         return "День недели должен быть от 1 до 6."
-    if period not in range(1, 7):
-        return "Номер пары должен быть от 1 до 6."
+    if period not in range(1, 5):
+        return "Номер пары должен быть от 1 до 4."
 
     lesson_type = str(data.get("lesson_type", "Лекция")).strip()
     if not lesson_type:

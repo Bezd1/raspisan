@@ -242,10 +242,18 @@ textarea:focus {
     font-size: 12px;
 }
 
-.demo-accounts {
+.demo-credentials {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 7px;
+    line-height: 1.45;
+}
+
+.demo-credentials code {
+    padding: 2px 5px;
+    border-radius: 5px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
 .demo-account {
@@ -576,13 +584,13 @@ textarea:focus {
 }
 
 .schedule {
-    min-width: 940px;
+    min-width: 820px;
 }
 
 .schedule-head,
 .schedule-row {
     display: grid;
-    grid-template-columns: 132px repeat(6, minmax(135px, 1fr));
+    grid-template-columns: 132px repeat(4, minmax(160px, 1fr));
 }
 
 .schedule-head > div {
@@ -631,6 +639,18 @@ textarea:focus {
 .day-cell small {
     color: var(--muted);
     font-size: 8px;
+}
+
+.day-cell em {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: rgba(40, 120, 214, 0.10);
+    color: var(--primary);
+    font-size: 8px;
+    font-style: normal;
+    font-weight: 800;
 }
 
 .schedule-cell {
@@ -793,15 +813,66 @@ textarea:focus {
 }
 
 .teacher-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 5px;
-    border-radius: 7px;
+    border-radius: 8px;
 }
 
 .teacher-item:hover {
     background: var(--soft);
+}
+
+.teacher-main {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 5px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+}
+
+.teacher-main-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.teacher-chevron {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.teacher-subject-list {
+    display: none;
+    margin: 0 6px 7px 42px;
+    padding-left: 8px;
+    border-left: 2px solid var(--border);
+}
+
+.teacher-subject-list.open {
+    display: grid;
+    gap: 4px;
+}
+
+.teacher-subject-draggable {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 9px;
+    cursor: grab;
+}
+
+.teacher-subject-draggable:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.teacher-no-subjects {
+    padding: 5px 0;
+    color: var(--muted);
+    font-size: 8px;
 }
 
 .teacher-avatar {
@@ -908,6 +979,12 @@ textarea:focus {
     font-weight: 900;
 }
 
+.directory-card > div[id$="-list"] {
+    max-height: 430px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
 .directory-item {
     display: flex;
     align-items: center;
@@ -1010,6 +1087,33 @@ textarea:focus {
 .dialog-header h2 {
     margin: 0;
     font-size: 19px;
+}
+
+.field-hint {
+    margin: 0;
+    padding: 9px 10px;
+    border-radius: 8px;
+    background: var(--soft);
+    color: var(--muted);
+    font-size: 10px;
+}
+
+
+.dialog-error {
+    margin: 0 0 14px;
+    padding: 11px 13px;
+    border: 1px solid rgba(223, 77, 89, 0.45);
+    border-radius: 10px;
+    background: rgba(223, 77, 89, 0.10);
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+html[data-theme="dark"] .dialog-error {
+    background: rgba(239, 102, 115, 0.14);
+    color: #ffb7bf;
 }
 
 .form-grid {
@@ -1270,4 +1374,38 @@ html[data-theme="dark"] .toast {
     background: var(--surface);
     border-color: var(--border);
     color: var(--text);
+}
+
+
+.conflict-dialog {
+    width: min(500px, calc(100% - 20px));
+}
+
+.conflict-message {
+    margin: 0;
+    padding: 14px;
+    border: 1px solid rgba(239, 102, 115, 0.35);
+    border-radius: 10px;
+    background: rgba(239, 102, 115, 0.08);
+    color: var(--text);
+    line-height: 1.55;
+}
+
+/* Запрещаем выделять и случайно перетаскивать саму таблицу расписания.
+   Drag & Drop остаётся доступным только для карточек занятий и дисциплин. */
+.schedule-wrap,
+.schedule,
+.schedule-head,
+#schedule-body,
+.schedule-row,
+.day-cell,
+.schedule-cell {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.schedule-wrap {
+    -webkit-user-drag: none;
 }

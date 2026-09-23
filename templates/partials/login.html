@@ -17,26 +17,20 @@
         <form id="login-form" class="stack">
             <label>
                 Логин
-                <input id="login-username" value="admin" autocomplete="username" required>
+                <input id="login-username" autocomplete="username" required>
             </label>
             <label>
                 Пароль
-                <input id="login-password" type="password" value="admin" autocomplete="current-password" required>
+                <input id="login-password" type="password" autocomplete="current-password" required>
             </label>
             <button class="button button-primary" type="submit">Войти</button>
         </form>
 
         <div class="demo-hint">
-            <strong>Демо-доступ</strong>
-            <div class="demo-accounts">
-                <button type="button" class="demo-account" data-demo-login="admin" data-demo-password="admin">
-                    <span>Администратор</span>
-                    <small>admin / admin</small>
-                </button>
-                <button type="button" class="demo-account" data-demo-login="teacher" data-demo-password="teacher">
-                    <span>Преподаватель</span>
-                    <small>teacher / teacher</small>
-                </button>
+            <strong>Демо-данные для входа</strong>
+            <div class="demo-credentials">
+                <div><b>Администратор:</b> логин <code>admin</code>, пароль <code>admin</code></div>
+                <div><b>Преподаватель:</b> логин <code>teacher</code>, пароль <code>teacher</code></div>
             </div>
         </div>
     </div>

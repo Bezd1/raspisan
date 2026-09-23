@@ -9,6 +9,7 @@ const state = {
     classrooms: [],
     teacher_subjects: [],
     lessons: [],
+    expandedTeachers: new Set(),
 };
 
 const days = [
@@ -20,14 +21,35 @@ const days = [
     "Суббота",
 ];
 
-const times = [
-    "08:30–10:00",
-    "10:10–11:40",
-    "12:00–13:30",
-    "13:40–15:10",
-    "15:20–16:50",
-    "17:00–18:30",
-];
+const bellSchedule = {
+    regular: [
+        "09:00–09:45 / 09:50–10:35",
+        "10:45–11:30 / 11:35–12:20",
+        "13:05–13:50 / 13:55–14:40",
+        "14:50–15:35 / 15:40–16:25",
+    ],
+    monday: [
+        "10:00–10:45 / 10:50–11:35",
+        "11:45–12:30 / 12:35–13:20",
+        "14:05–14:50 / 14:55–15:40",
+        "15:50–16:35 / 16:40–17:25",
+    ],
+};
+
+function getBellTime(weekday, period) {
+    const schedule = weekday === 1 ? bellSchedule.monday : bellSchedule.regular;
+    return schedule[period - 1] || "—";
+}
+
+function getTeacherShortName(fullName) {
+    return String(fullName || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => part[0].toUpperCase())
+        .join("")
+        .slice(0, 4);
+}
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -90,12 +112,31 @@ async function api(url, options = {}) {
 }
 
 function toast(message, type = "success") {
+    if (type === "error" && String(message).startsWith("Конфликт:")) {
+        showConflictDialog(message);
+        return;
+    }
+
     const node = document.createElement("div");
     node.className = `toast ${type}`;
     node.textContent = message;
     $("#toast-container").append(node);
 
     setTimeout(() => node.remove(), 3200);
+}
+
+
+function showConflictDialog(message) {
+    const dialog = $("#conflict-dialog");
+    if (!dialog) {
+        return;
+    }
+
+    $("#conflict-message").textContent = message.replace(/^Конфликт:\s*/, "");
+    if (dialog.open) {
+        dialog.close();
+    }
+    dialog.showModal();
 }
 
 function confirmDialog(message, title = "Удаление") {
@@ -276,6 +317,7 @@ function renderScheduleGroups() {
 }
 
 function renderSchedule() {
+    preventScheduleContainerDrag();
     const body = $("#schedule-body");
     body.innerHTML = "";
 
@@ -288,10 +330,11 @@ function renderSchedule() {
         dayCell.innerHTML = `
             <b>${days[weekday - 1]}</b>
             <small>День ${weekday}</small>
+            ${weekday === 1 ? '<em>Классный час · 09:00–09:50</em>' : ''}
         `;
         row.append(dayCell);
 
-        for (let period = 1; period <= 6; period += 1) {
+        for (let period = 1; period <= 4; period += 1) {
             const cell = createScheduleCell(weekday, period);
             row.append(cell);
         }
@@ -327,6 +370,34 @@ function renderSchedule() {
     });
 }
 
+function preventScheduleContainerDrag() {
+    const schedule = document.querySelector(".schedule-wrap");
+
+    if (!schedule || schedule.dataset.dragGuardReady === "true") {
+        return;
+    }
+
+    schedule.dataset.dragGuardReady = "true";
+
+    schedule.addEventListener("dragstart", (event) => {
+        const draggableItem = event.target.closest(
+            ".lesson-card, .teacher-subject-draggable"
+        );
+
+        if (!draggableItem) {
+            event.preventDefault();
+        }
+    });
+
+    schedule.addEventListener("mousedown", (event) => {
+        if (event.button === 0 && !event.target.closest(
+            ".lesson-card, .teacher-subject-draggable, button, input, select"
+        )) {
+            window.getSelection()?.removeAllRanges();
+        }
+    });
+}
+
 function createScheduleCell(weekday, period) {
     const cell = document.createElement("div");
     cell.className = "schedule-cell";
@@ -335,7 +406,7 @@ function createScheduleCell(weekday, period) {
 
     const periodLabel = document.createElement("div");
     periodLabel.className = "period-time";
-    periodLabel.textContent = times[period - 1];
+    periodLabel.textContent = getBellTime(weekday, period);
     cell.append(periodLabel);
 
     if (!isAdmin()) {
@@ -355,9 +426,23 @@ function createScheduleCell(weekday, period) {
         event.preventDefault();
         cell.classList.remove("drag-over");
 
-        const id = Number(event.dataTransfer.getData("lesson-id"));
-        if (id) {
-            await moveLesson(id, weekday, period);
+        const lessonId = Number(event.dataTransfer.getData("lesson-id"));
+        if (lessonId) {
+            await moveLesson(lessonId, weekday, period);
+            return;
+        }
+
+        const teacherId = Number(event.dataTransfer.getData("teacher-id"));
+        const subjectId = Number(event.dataTransfer.getData("subject-id"));
+        if (teacherId && subjectId) {
+            openLesson({
+                week: state.week,
+                weekday,
+                period,
+                teacher_id: teacherId,
+                subject_id: subjectId,
+                group_id: state.group || "",
+            });
         }
     });
 
@@ -604,23 +689,63 @@ function renderTeachersPanel() {
     const query = $("#teacher-search")?.value.toLowerCase().trim() || "";
 
     state.teachers
-        .filter((teacher) => {
-            return `${teacher.full_name} ${teacher.short_name}`
-                .toLowerCase()
-                .includes(query);
-        })
+        .filter((teacher) => `${teacher.full_name} ${teacher.short_name}`.toLowerCase().includes(query))
         .forEach((teacher) => {
             const item = document.createElement("div");
             item.className = "teacher-item";
+
+            const assignedSubjects = state.teacher_subjects
+                .filter((link) => Number(link.teacher_id) === Number(teacher.id))
+                .map((link) => state.subjects.find((subject) => Number(subject.id) === Number(link.subject_id)))
+                .filter(Boolean);
+
             item.innerHTML = `
-                <span class="teacher-avatar" style="--teacher-color:${esc(teacher.color || "#6366f1")}">
-                    ${esc((teacher.short_name || teacher.full_name || "").slice(0, 2).toUpperCase())}
-                </span>
-                <div>
-                    <b>${esc(teacher.short_name)}</b>
-                    <small>${esc(teacher.full_name)}</small>
-                </div>
+                <button type="button" class="teacher-main" aria-expanded="${state.expandedTeachers.has(Number(teacher.id))}">
+                    <span class="teacher-avatar" style="--teacher-color:${esc(teacher.color || "#6366f1")}">
+                        ${esc((teacher.short_name || getTeacherShortName(teacher.full_name) || "").slice(0, 3).toUpperCase())}
+                    </span>
+                    <span class="teacher-main-text">
+                        <b>${esc(teacher.short_name || getTeacherShortName(teacher.full_name))}</b>
+                        <small>${esc(teacher.full_name)}</small>
+                    </span>
+                    <span class="teacher-chevron">${state.expandedTeachers.has(Number(teacher.id)) ? "▾" : "▸"}</span>
+                </button>
+                <div class="teacher-subject-list ${state.expandedTeachers.has(Number(teacher.id)) ? "open" : ""}"></div>
             `;
+
+            const subjectList = item.querySelector(".teacher-subject-list");
+            if (!assignedSubjects.length) {
+                subjectList.innerHTML = '<span class="teacher-no-subjects">Нет привязанных дисциплин</span>';
+            } else {
+                assignedSubjects.forEach((subject) => {
+                    const subjectItem = document.createElement("div");
+                    subjectItem.className = "teacher-subject-draggable";
+                    subjectItem.draggable = isAdmin();
+                    subjectItem.textContent = subject.name;
+                    subjectItem.title = isAdmin() ? "Перетащите дисциплину в расписание" : subject.name;
+
+                    if (isAdmin()) {
+                        subjectItem.addEventListener("dragstart", (event) => {
+                            event.dataTransfer.setData("teacher-id", String(teacher.id));
+                            event.dataTransfer.setData("subject-id", String(subject.id));
+                            event.dataTransfer.effectAllowed = "copy";
+                        });
+                    }
+
+                    subjectList.append(subjectItem);
+                });
+            }
+
+            item.querySelector(".teacher-main").addEventListener("click", () => {
+                const teacherId = Number(teacher.id);
+                if (state.expandedTeachers.has(teacherId)) {
+                    state.expandedTeachers.delete(teacherId);
+                } else {
+                    state.expandedTeachers.add(teacherId);
+                }
+                renderTeachersPanel();
+            });
+
             container.append(item);
         });
 }
@@ -748,6 +873,8 @@ function openDirectory(type) {
 
     $("#directory-type").value = type;
     $("#directory-title").textContent = titles[type];
+    $("#directory-error").textContent = "";
+    $("#directory-error").classList.add("hidden");
 
     const fields = $("#directory-fields");
 
@@ -758,10 +885,7 @@ function openDirectory(type) {
                     ФИО
                     <input id="ref-full" required>
                 </label>
-                <label>
-                    Короткое имя
-                    <input id="ref-short" required>
-                </label>
+                <p class="field-hint">Сокращение будет создано автоматически по первым буквам ФИО.</p>
                 <label>
                     Цвет
                     <input id="ref-color" type="color" value="#4f46e5">
@@ -796,8 +920,21 @@ function openDirectory(type) {
 async function saveDirectory(event) {
     event.preventDefault();
 
+    const errorNode = $("#directory-error");
+    const showDirectoryError = (message) => {
+        errorNode.textContent = message;
+        errorNode.classList.remove("hidden");
+    };
+
+    const clearDirectoryError = () => {
+        errorNode.textContent = "";
+        errorNode.classList.add("hidden");
+    };
+
+    clearDirectoryError();
+
     if (!isAdmin()) {
-        toast("Только администратор может изменять справочники.", "error");
+        showDirectoryError("Только администратор может изменять справочники.");
         return;
     }
 
@@ -805,7 +942,6 @@ async function saveDirectory(event) {
     const data = type === "teachers"
         ? {
             full_name: $("#ref-full").value.trim(),
-            short_name: $("#ref-short").value.trim(),
             color: $("#ref-color").value,
         }
         : {
@@ -814,11 +950,11 @@ async function saveDirectory(event) {
         };
 
     const empty = type === "teachers"
-        ? !data.full_name || !data.short_name
+        ? !data.full_name
         : !data.name;
 
     if (empty) {
-        toast("Заполните обязательные поля.", "error");
+        showDirectoryError("Заполните обязательные поля.");
         return;
     }
 
@@ -832,7 +968,7 @@ async function saveDirectory(event) {
         toast("Запись добавлена.");
         await loadData();
     } catch (error) {
-        toast(error.message, "error");
+        showDirectoryError(error.message);
     }
 }
 
@@ -887,13 +1023,6 @@ function updateWeekButtons() {
 function setup() {
     $("#login-form").addEventListener("submit", login);
 
-    document.querySelectorAll("[data-demo-login]").forEach((button) => {
-        button.addEventListener("click", () => {
-            $("#login-username").value = button.dataset.demoLogin;
-            $("#login-password").value = button.dataset.demoPassword;
-            $("#login-form").requestSubmit();
-        });
-    });
     $("#logout-button").addEventListener("click", logout);
 
     $("#add-lesson-button").addEventListener("click", () => {
